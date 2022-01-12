@@ -1,6 +1,5 @@
-from re import X
 import matplotlib
-from matplotlib import pyplot as plt, use
+from matplotlib import pyplot as plt
 from IPython import display
 import time
 import numpy as np
@@ -10,6 +9,8 @@ import os
 import tarfile
 import zipfile
 import requests
+import re
+import collections
 
 def use_svg_display():
     display.set_matplotlib_formats('svg')
@@ -273,6 +274,7 @@ def evaluate_loss(net, data_iter, loss):
 
 DATA_HUB = dict()
 DATA_URL = 'http://d2l-data.s3-accelerate.amazonaws.com/'
+DATA_HUB['time_machine'] = (DATA_URL + 'timemachine.txt','090b5e7e70c295757f55df93cb0a180b9691891a')
 
 def download(name,cache_dir=os.path.join('..','data')):
     assert name in DATA_HUB,f"{name}不存在于{DATA_HUB}"
@@ -389,3 +391,15 @@ def show_heatmaps(matrices, xlabel, ylabel, titles=None, figsize=(2.5, 2.5),
                 ax.set_title(titles[j])
     fig.colorbar(pcm, ax=axes, shrink=0.6);
 
+def read_time_machine():
+    with open(download('time_machine'),'r') as f:
+        lines = f.readlines()
+    return [re.sub('[^A-Za-z]+', ' ', line).strip().lower() for line in lines]
+
+def tokenize(lines,token='word'):
+    if token == 'word':
+        return [line.split() for line in lines]
+    elif token == 'char':
+        return [list(line) for line in lines]
+    else:
+        print('错误：未知词元类型：'+token)
