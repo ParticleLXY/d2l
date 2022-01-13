@@ -1,5 +1,6 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+my_mlp/
 *.py[cod]
 *$py.class
 
