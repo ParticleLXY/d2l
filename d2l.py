@@ -11,6 +11,7 @@ import zipfile
 import requests
 import re
 import collections
+import random
 
 def use_svg_display():
     display.set_matplotlib_formats('svg')
@@ -465,14 +466,14 @@ def load_corpus_time_machine(max_tokens=-1):
 def seq_data_iter_random(corpus, batch_size, num_steps):
     """使用随机抽样生成一个小批量子序列"""
     # 从随机偏移量开始对序列进行分区，随机范围包括num_steps-1
-    corpus = corpus[tf.random.randint(0, num_steps - 1):]
+    corpus = corpus[random.randint(0, num_steps - 1):]
     # 减去1，是因为我们需要考虑标签
     num_subseqs = (len(corpus) - 1) // num_steps
     # 长度为num_steps的子序列的起始索引
     initial_indices = list(range(0, num_subseqs * num_steps, num_steps))
     # 在随机抽样的迭代过程中，
     # 来自两个相邻的、随机的、小批量中的子序列不一定在原始序列上相邻
-    tf.random.shuffle(initial_indices)
+    random.shuffle(initial_indices)
 
     def data(pos):
         # 返回从pos位置开始的长度为num_steps的序列
@@ -489,7 +490,7 @@ def seq_data_iter_random(corpus, batch_size, num_steps):
 def seq_data_iter_sequential(corpus, batch_size, num_steps):
     """使用顺序分区生成一个小批量子序列"""
     # 从随机偏移量开始划分序列
-    offset = tf.random.randint(0, num_steps)
+    offset = random.randint(0, num_steps)
     num_tokens = ((len(corpus) - offset - 1) // batch_size) * batch_size
     Xs = tf.constant(corpus[offset: offset + num_tokens])
     Ys = tf.constant(corpus[offset + 1: offset + 1 + num_tokens])
@@ -501,7 +502,7 @@ def seq_data_iter_sequential(corpus, batch_size, num_steps):
         Y = Ys[:, i: i + num_steps]
         yield X, Y
 
-class SeqDataLoader: 
+class SeqDataLoader:
     """加载序列数据的迭代器"""
     def __init__(self, batch_size, num_steps, use_random_iter, max_tokens):
         if use_random_iter:
@@ -514,4 +515,8 @@ class SeqDataLoader:
     def __iter__(self):
         return self.data_iter_fn(self.corpus, self.batch_size, self.num_steps)
 
-        
+def load_data_time_machine(batch_size, num_steps,use_random_iter=False, max_tokens=10000):
+    """返回时光机器数据集的迭代器和词表"""
+    data_iter = SeqDataLoader(
+        batch_size, num_steps, use_random_iter, max_tokens)
+    return data_iter, data_iter.vocab
